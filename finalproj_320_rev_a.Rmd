@@ -342,14 +342,11 @@ Our machine learning model was able to predict hits at roughly a 79% success rat
 ### Multiple Logistic Regression
 
 ```{r}
-
 mus = read.csv("song_df.csv") #read song dataset to variable mus
 
+musiclog = mus[,-c(1,2,3,4)] #removing the  X ,track,artist,uri as these cannot be modelled
 
-musiclog = mus[,-c(1,2,3,4)]#removing the  X ,track,artist,uri as these cannot be modelled
-
-#summary of dataset
-summary(musiclog) 
+summary(musiclog) #summary of dataset
 ```
 
 Here we just tidy our dataframe to include only attributes that we can train our model on. We remove attributes that cannot be modelled on.
@@ -359,15 +356,23 @@ Here we just tidy our dataframe to include only attributes that we can train our
 
 ```{r Correlation Analysis}
 
-musiclognum = musiclog%>% select_if(is.numeric)#selecting only the numeric variables from student for correlation
+musiclognum = musiclog %>% 
+  select_if(is.numeric) # selecting only the numeric variables from student for correlation
 
 #Correlation plot from numeric variables
-ggcorrplot(cor(musiclognum), hc.order = TRUE, outline.col = "white",lab = TRUE, title = "Correlation Plot", insig = c("pch", "blank"), pch = 4, pch.col = "black",lab_size = 2,tl.cex =8)
+ggcorrplot(cor(musiclognum), 
+           hc.order = TRUE, 
+           outline.col = "white",
+           lab = TRUE, 
+           title = "Correlation Plot", 
+           insig = c("pch", "blank"), 
+           pch = 4, 
+           pch.col = "black",
+           lab_size = 2,
+           tl.cex =8)
 ```
 
 The correlation plot helps showcase the relationship between numeric variables. instrumentalness variable has the highest correlation (.41) with the Target variable, followed by danceability.
-
-
 
 #### Logistic Regression Model
 
@@ -412,6 +417,8 @@ imp <- data.frame(Variable_names   = rownames(imp),overall_Importance_Tstat = im
 imp[order(imp$overall,decreasing = T),]
 
 ```
+
+Our model identifies nstrumentalness, danceability, and speechiness as the most important variables when determining a hit. This makes sense. Many songs nowadays are low in instrumentalness and high in speechiness. Furthermore, (pre-pandemic) contemporary society is big on clubs and social gatherings, so danceability is very important. 
 
 ## Future Implication and Stretch Goals
 
