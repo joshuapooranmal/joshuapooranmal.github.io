@@ -1,5 +1,5 @@
 ---
-title: "CMSC 320 Final Project"
+title: "Music Hit Prediction - CMSC 320 Final Project"
 author: "Jacob Luterman, Joshua Pooranmal, Shiv Patel"
 date: "05/18/2020"
 output: html_document
@@ -7,10 +7,13 @@ output: html_document
 
 Music has the power to culturally, morally, and emotionally influence our society. As time progresses, and popular culture inevitably shifts, diffrent genres of music begin to surface and become popular. Whether it's 1940s swing, 1970s rock-and-roll, or 1990s hip-hop, society's ear for music is constantly changing. In order for record labels (both old and new) to maintain relevance and continue to be proftable, it is important to have some way of keeping up with contemporary society's musical preferences. Playing it by ear is seems like a good idea, but this introduces a lot of subjectivity, which isn't reliable. Tracking user feedback is also a good idea if you're looking to gauge how well a song is currently doing, but the point is to stay ahead of the game, not alongside it. 
 
-So how does one work to predict whether or not a song will be a hit? 
+So how does one work to predict whether or not a song will be a hit? Is this even possible? 
 
-The following 
+The following project code makes use of data collected from Spotify that represents all songs from the 1960s up until the 2010s. For each song entity, we have access to the values of several compositional factors (tempo, energy, loudness, etc.), its artist(s), and whether or not the song is considered a "hit" by Spotify. The goal of this project is to collect and evaluate trends in the makeup of songs as time progresses in order to train a machine learning model that can predict if a song will be a hit based solely on its compositional makeup. In order to evaluate if our models are accurate, we will train them using all songs from 1960s-2000s and identify how accurately it can predict whether or not a 2010s song is a hit.
 
+## Data curation and cleaning
+
+The first step of the process is to curate our data. We will combine all data from the 1960s to the 2010s into a single data frame. We will also append a new column called 'decade' to identify which decade a song belongs to for later use. 
 
 ```{r results='hide', message=FALSE, warning=FALSE}
 library(rvest)
@@ -33,10 +36,7 @@ songs_1990 <- "dataset-of-90s.csv"
 songs_1980 <- "dataset-of-80s.csv"
 songs_1970 <- "dataset-of-70s.csv"
 songs_1960 <- "dataset-of-60s.csv"
-```
 
-
-```{r}
 song_files <- c(songs_2010,songs_2000,songs_1990,songs_1980,songs_1970,songs_1960)
 song_df <- NULL
 for (song_file in song_files) {
@@ -49,22 +49,25 @@ song_df$decade <- ordered(song_df$decade, levels = c("60","70","80","90","00","1
 
 as_tibble(song_df)
 ```
-The code chunk above takes music datasets from the 1960's, 1970's, 1980's, 1990's, 2000's, and 2010's and puts it together to make a larger dataframe containg all songs from all of the datasets. In addition the column "decade" is added containing the decade of each song. This is relevant for the rest of the PROJECT??? since it will allow us to see various aspects of each decade throughout. 
 
-
+Once our data frame is generated, we must get rid of data that is not important for the purpose of this project. We don't need the resource url of a song so we can remove the uri column. Although a track's key does speak to its composition, most music listeners aren't aware of the key they are listening to, so we will omit this. We also decided to get rid of valence because we felt like measuring "positiveness" of a song introduces some subjectivity and we weren't interested in the potential overhead of including this attribute in our models. Below is the song dataframe that will be used for the majority of this project:
 ```{r graph}
 song_df <- song_df %>% 
-  select(-c(uri,key,valence,track))
+  select(-c(uri,key,valence))
 
 as_tibble(song_df)
 ```
-This code chunk is used to get rid of elements of the dataset that are not relevant to this. uri which is the url is not relevant to this as the key song and valence is not relevent ADD STUFF?. track and artist are strings meaning we can't use this in analyzing the data. However, if we wanted to see if there is a different chance for an artist to have a hit given that they have had one previously we could use this. (We would find the first instance of when the artist had a hit and come up with a formula that way)
 
+The "target" attribute identifies whether or not a song is a hit by assigning hits with the attribute walue '1' and non-hits with '0'. Here is a data frame of all songs Spotify considers a hit:
 ```{r}
 hits_only <- filter(song_df,target == 1) 
 
 as_tibble(hits_only)
 ```
+
+## Exploratory Data Analysis
+
+Now that we have our working dataframe, we can try and identify changes in specific compositional aspects of hits and non-hits across decades. 
 
 ```{r tempo}
 plot_avg_by_decade <- function(df,col){
@@ -83,9 +86,8 @@ plotting <- df %>%
 song_df %>% 
   plot_avg_by_decade(tempo)
 ```
-The code chunk above looks to compare average tempo between songs that were hits in each decade which is represented by the red color with all songs that were not hits in each decade which is represented by the color blue. Based off of the graph it does not seem that there is a differrence in the tempo between songs that are hits and songs that are not.
 
-
+Tempo is the overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration. The graph above conveys that there is not much change in average tempo as the decades change. Furthermore, the tempo between hits(blue) and non-hits(red) aren't too different as well for each decade. This indicates that listeners' taste for tempo seldom changes. Is this because humans are inherently drawn to listen to songs within a given tempo range?
 
 ```{r energy}
 plot_avg_by_decade <- function(df,col){
@@ -104,7 +106,8 @@ plotting <- df %>%
 song_df %>% 
   plot_avg_by_decade(energy)
 ```
-energy
+
+Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy. Average energy seems to have a more obvious trend then that of energy. Within each decade, songs that were hits had higher average energy ratings. Average energy also seems to grow for both hits and non-hits as we move from decade to decade. There is a slight drop from the 2000s to 2010s, but nothing that would overwhelmingly indicate a future trend towards lower energy songs. 
 
 ```{r acousticness}
 plot_avg_by_decade <- function(df,col) {
@@ -123,7 +126,8 @@ plot_avg_by_decade <- function(df,col) {
 song_df %>% 
   plot_avg_by_decade(acousticness)
 ```
-acousticness
+
+Acoustiness is a confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic. Within each decade, hits tended to have lower acoustic ratings than non-hits. This trend persists as time progresses as average acousticness for both hits and non hits sees a drop in each decade. It seem like listeners' are not too interested in songs with high acoustiness ratings. 
 
 ```{r liveliness}
 plot_avg_by_decade <- function(df,col){
@@ -135,14 +139,15 @@ plot_avg_by_decade <- function(df,col){
   
   ggplot(plotting) + 
     geom_bar(stat="identity", aes(x=decade,y = avg,fill=target), position="dodge") +
-    labs(title = "Liveliness Changes per Decade Between Hits(1) and Non-Hits(0)", x = "Decade", y = "Average Liveliness") +
+    labs(title = "Liveness Changes per Decade Between Hits(1) and Non-Hits(0)", x = "Decade", y = "Average Liveliness") +
     theme(plot.title = element_text(hjust = 0.5)) 
 }
 
 song_df %>% 
   plot_avg_by_decade(liveness)
 ```
-livenss
+
+Liveness Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live. Liveness originally seems to indicate that there isn't much change, but if you look closely, hits subtly decrease in liveness as time progresses. Contemporary listeners may be more interested in studio-recorded music than they are in live music.  
 
 ```{r durationms}
 plot_avg_by_decade <- function(df,col){
@@ -161,7 +166,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(duration_ms)
 ```
-duration
+
+Duration is measured in milliseconds. Listeners seemed to prefer longer songs going into the 1990s, but subsequently began to grow a renewed liking to more concise pieces.
 
 ```{r timesignature}
 plot_avg_by_decade <- function(df,col){
@@ -180,7 +186,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(time_signature)
 ```
-time signature
+
+Time signature is an estimated overall time signature of a track. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure). Time signatures seem to stay fairly consistent between both hits and non-hits as time progresses.
 
 ```{r chorushit}
 plot_avg_by_decade <- function(df,col){
@@ -199,7 +206,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>%
   plot_avg_by_decade(chorus_hit)
 ```
-chorus
+
+Chorus hit is the artist's best estimate of when the chorus would start for the track. Its the timestamp of the start of the third section of the track (in milliseconds). There is a general trend for all songs: all choruses for both hits and non-hits seems to hit for the first time around the 40 second mark of a song. It's quite intriguing that no decade has worked to break this trend. 
 
 ```{r sections}
 plot_avg_by_decade <- function(df,col){
@@ -218,7 +226,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(sections)
 ```
-sections
+
+Sections refers to the number of sections the particular track has. Similar to duration statistics, it seems like listeners yearned for more sections in their music up until the 2000s, when hits started to become relatively more concise. 
 
 ```{r loudness}
 plot_avg_by_decade <- function(df,col){
@@ -237,7 +246,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(loudness)
 ```
-loudness
+
+The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db. As time has progessed, it seems like music as a whole (both hits and non-hits) tend to become more loud. This may be due to the use of more technology when producing songs. Electronic devices can emulate sounds that are loud better than concrete instruments themselves. An example would be the 808 drum in hip-hop music.
 
 ```{r speechiness}
 plot_avg_by_decade <- function(df,col){
@@ -256,7 +266,8 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(speechiness)
 ```
-speechness
+
+Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. From the 60s to the 80s, rock-and-roll was very popular, which is why hits tended to have less spechiness. With the rise of modern pop and hip-hip, hits are now far more speechy. There is little evidence to assert this this upward trend in speechiness will soon come to an end. 
 
 ```{r instrumentalness}
 plot_avg_by_decade <- function(df,col){
@@ -275,18 +286,18 @@ plot_avg_by_decade <- function(df,col){
 song_df %>% 
   plot_avg_by_decade(instrumentalness)
 ```
-intstrumentalness
-how many artists have hits
 
+Instrumentalness predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. There is an abvious trend that listeners lean towards songs that are more vocal than those that are instrumental. This preference has gotten even more obvious as time has progressed, with hits for the 2010s not even surpassing an average instrumentalness rating of 0.05.
+
+
+=========================I don't see why this is necessary. Doesn't help much with storytelling===============================
 ```{r}
 song_df %>% 
   group_by(decade) %>%
   count -> freq
   ggplot(freq) + geom_bar(stat= "identity",aes(x=decade,y = n),position = "dodge")
-
-
 ```
-#how many songs in each decade
+how many songs in each decade
 
 
 
@@ -306,15 +317,22 @@ song_df %>% plot_total_hits_by_decade(target)
 ```
 hits per decade
 This graph looks at the total amount of hits per decade. This is relevant because it shows that there was more variance in terms of how many different songs were hits. Leads to questions of how many different artists had hits to see if popularity of artists determined the amount of hits.
+==============================================see above=====================================================================
 
+## Machine Learning
 
-random forest 
-new chunk to prevent the constant running of previous chunk
-based off of our predictions we have an 80% accuracy on unseen data
+With our newfound info about the compositional makeup of hits and non-hits between decades, we can now try and build a machine learning model that can predict wether or not a song is a hit. As mentioned previously, we will train our model using all songs up to and including the 2000s. We will then use our model to predict whether or not a 2010s song will be a hit. We will compare our model's result (hit or non-hit) with the actual target value from Spotify to measure the model's accuracy.
+
+## Random Forest
+
+The first model we will use will be a random forest. The code below filters specific entities and using tidymodel, we build our testing and training data. We also preporcoess our data to ensure that it can be processed correctly before building our model.
+
+Training data: all songs from 1960s to 2000s, inclusive
+Test data: all songs from 2010s
 
 ```{r}
 song_df %>% 
-  select(-c(artist,mode,sections,time_signature)) %>% 
+  select(-c(artist,track,mode,sections,time_signature)) %>% 
   mutate(target = as.factor(target))-> update_song_df
   training_data <- update_song_df %>% 
     filter(decade!="10")
@@ -331,16 +349,9 @@ data_testing <- data_recipe %>%
 data_training <- juice(data_recipe)
 
 ```
-filteres specific entities. Using tidymodel, 
-
-Training data: 60s - 00s
-Test data: 10s
-
-Recipe is data preprocessing
-
-everything else is making sure that data is being procesed correctly
 
 
+Now that we have curated our training and testing data, we can build a random forest model. We will use 100 trees for this model. Once done, we will use this model to predict whether or not a songs from the 2010s will be a hit.
 ```{r}
 r_forest <- rand_forest(trees = 100, mode = "classification") %>% 
   set_engine("randomForest") %>% 
@@ -352,9 +363,7 @@ r_forest %>%
   predictions_r_forest %>% 
     metrics(truth = target,estimate = .pred_class)
 ```
-Using random forest
-
-Assertion: based off of a random forst model with 100 trees, there is a 79% accuracy. 
+Our machine learning model was able to predict hits at roughly a 79% success rate. Using this model, record labels, as long as they have the correct compositional metrics for a song, can predict if it will be a hit with roughly 80% confidence. Not bad at all.   
 
 ## Multiple Logistic Regression
 
@@ -434,6 +443,9 @@ imp[order(imp$overall,decreasing = T),]
 
 ```
 
+## Future Implication and Stretch Goals
+
+One overarching realization that we considered but did not put into our model was the idea that once an artist has a hit, they are more likely to get another. Our model predicts hits, but not "breakout" hits, or those that came from artist who never previously had a hit. 
 
 ```{r breakoutvsnon}
 song_df %>% 
@@ -449,6 +461,7 @@ ggplot(hit_amount) +
   theme(plot.title = element_text(hjust = 0.5)) 
 ```
 
+The graph above shows that it used to be far more difficult to get a "breakout" hit. The growth of technology has given aspiring artists a plotform where they can broadcast and promote their own music and brad, which may be the reason why the numbers begin to even out as time progresses. Our model doesn't consider the technological aspect of society. Songs can go viral at any time. Take, for instance, Old Town Road by Lil Nas X. The song blew up on social media before it became the longest reigning #1 hit on Billboard top 100. Maybe instances like this are impossible to predict, but still something worth noting nonetheless. 
 
 ```{r}
 song_df %>% 
