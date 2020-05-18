@@ -325,6 +325,7 @@ data_training <- juice(data_recipe)
 
 
 Now that we have curated our training and testing data, we can build a random forest model. We will use 100 trees for this model. Once done, we will use this model to predict whether or not a songs from the 2010s will be a hit.
+
 ```{r}
 r_forest <- rand_forest(trees = 100, mode = "classification") %>% 
   set_engine("randomForest") %>% 
@@ -345,17 +346,18 @@ Our machine learning model was able to predict hits at roughly a 79% success rat
 mus = read.csv("song_df.csv") #read song dataset to variable mus
 
 
-
 musiclog = mus[,-c(1,2,3,4)]#removing the  X ,track,artist,uri as these cannot be modelled
 
 #summary of dataset
 summary(musiclog) 
 ```
 
+Here we just tidy our dataframe to include only attributes that we can train our model on. We remove attributes that cannot be modelled on.
+
 
 #### Correlation Analysis
 
-```{r }
+```{r Correlation Analysis}
 
 musiclognum = musiclog%>% select_if(is.numeric)#selecting only the numeric variables from student for correlation
 
@@ -363,13 +365,13 @@ musiclognum = musiclog%>% select_if(is.numeric)#selecting only the numeric varia
 ggcorrplot(cor(musiclognum), hc.order = TRUE, outline.col = "white",lab = TRUE, title = "Correlation Plot", insig = c("pch", "blank"), pch = 4, pch.col = "black",lab_size = 2,tl.cex =8)
 ```
 
-The correlation plot helps showcase the relationship between numeric variables. instrumentalness variable has the highest correlation(.41) with the Target variable, followed by danceability.
+The correlation plot helps showcase the relationship between numeric variables. instrumentalness variable has the highest correlation (.41) with the Target variable, followed by danceability.
 
 
 
 #### Logistic Regression Model
 
-```{r }
+```{r Logistic Regression Model}
 musiclog$decade = as.factor(musiclog$decade)#converting decade variable to factor
 set.seed(123)#used to randomize the records in the dataset
 
@@ -379,16 +381,11 @@ train_set <-train_set[,-c(17)]
 test_set <- filter(musiclog, decade == "0" | decade == "10")#testing set obtained by filtering on data from 2000 till now
 test_set <-test_set[,-c(17)]
 
-```
-
-```{r}
 logitreg <- glm(target~.,data = train_set, family = "binomial")#Creating a logistic regression model based on all the independent variables
   
 #Model summary
 summary(logitreg)
-```
 
-```{r}
 predicttrain <- predict(logitreg,test_set,type = "response")#generating predicted output as a probability
 
 
@@ -405,9 +402,9 @@ From the model summary it is clear that at 95% confidence interval all the indep
 By keeping the cutoff for the Target variable to be considered as hit to .6 , a confusion matrix was created. The confusion matrix shows the model has an accuracy of 74.56% which is greater than the No - information rate. The confusion matrix also shows the sensitivity(82.46%) and specificity(66.6%) for the model.
 
 
-#### Variable Importance as Per T-Statistic
+#### Variable Importance
 
-```{r }
+```{r Variable Importance}
 
 #Creating a data frame showing variable importance in decreasing order of importnace based on T-statistic
 imp <- as.data.frame(varImp(logitreg))
@@ -420,7 +417,7 @@ imp[order(imp$overall,decreasing = T),]
 
 One overarching realization that we considered but did not put into our model was the idea that once an artist has a hit, they are more likely to get another. Our model predicts hits, but not "breakout" hits, or those that came from artist who never previously had a hit. 
 
-```{r breakoutvsnon}
+```{r Graphing Breakout Hits}
 song_df %>% 
   group_by(decade,artist) %>%
   summarise(has_hit=max(target))%>%
