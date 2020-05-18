@@ -28,7 +28,10 @@ library(dplyr) # For data manipulation .. eg. selecting numeric variables)
 library(openxlsx) # read excel file
 library(knitr)
 options(stringsAsFactors = FALSE)
+```
 
+
+```{r}
 # Datasets retrieved from https://www.kaggle.com/theoverman/the-spotify-hit-predictor-dataset
 songs_2010 <- "dataset-of-10s.csv"
 songs_2000 <- "dataset-of-00s.csv"
