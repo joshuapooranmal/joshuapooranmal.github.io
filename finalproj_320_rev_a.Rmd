@@ -418,9 +418,9 @@ imp[order(imp$overall,decreasing = T),]
 
 ```
 
-Our model identifies nstrumentalness, danceability, and speechiness as the most important variables when determining a hit. This makes sense. Many songs nowadays are low in instrumentalness and high in speechiness. Furthermore, (pre-pandemic) contemporary society is big on clubs and social gatherings, so danceability is very important. 
+Our model identifies instrumentalness, danceability, and speechiness as the most important variables when determining a hit. This makes sense. Many songs nowadays are low in instrumentalness and high in speechiness. Furthermore, (pre-pandemic) contemporary society is big on clubs and social gatherings, so danceability is very important. 
 
-## Future Implication and Stretch Goals
+## Future Implications and Stretch Goals
 
 One overarching realization that we considered but did not put into our model was the idea that once an artist has a hit, they are more likely to get another. Our model predicts hits, but not "breakout" hits, or those that came from artist who never previously had a hit. 
 
@@ -439,3 +439,13 @@ ggplot(hit_amount) +
 ```
 
 The graph above shows that it used to be far more difficult to get a "breakout" hit. The growth of technology has given aspiring artists a plotform where they can broadcast and promote their own music and brad, which may be the reason why the numbers begin to even out as time progresses. Our model doesn't consider the technological aspect of society. Songs can go viral at any time. Take, for instance, Old Town Road by Lil Nas X. The song blew up on social media before it became the longest reigning #1 hit on Billboard top 100. Maybe instances like this are impossible to predict, but still something worth noting nonetheless. 
+
+## Reference Material
+Project data source:
+https://www.kaggle.com/theoverman/the-spotify-hit-predictor-dataset
+
+Another music hit predictor:
+https://towardsdatascience.com/song-popularity-predictor-1ef69735e380
+
+Request more song data from Spotify:
+https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/
