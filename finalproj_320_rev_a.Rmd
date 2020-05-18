@@ -31,7 +31,7 @@ options(stringsAsFactors = FALSE)
 ```
 
 
-```{r}
+```{r Importing Data}
 # Datasets retrieved from https://www.kaggle.com/theoverman/the-spotify-hit-predictor-dataset
 songs_2010 <- "dataset-of-10s.csv"
 songs_2000 <- "dataset-of-00s.csv"
@@ -54,7 +54,7 @@ as_tibble(song_df)
 ```
 
 Once our data frame is generated, we must get rid of data that is not important for the purpose of this project. We don't need the resource url of a song so we can remove the uri column. Although a track's key does speak to its composition, most music listeners aren't aware of the key they are listening to, so we will omit this. We also decided to get rid of valence because we felt like measuring "positiveness" of a song introduces some subjectivity and we weren't interested in the potential overhead of including this attribute in our models. Below is the song dataframe that will be used for the majority of this project:
-```{r graph}
+```{r  Tabling DataFrame}
 song_df <- song_df %>% 
   select(-c(uri,key,valence))
 
@@ -62,7 +62,7 @@ as_tibble(song_df)
 ```
 
 The "target" attribute identifies whether or not a song is a hit by assigning hits with the attribute walue '1' and non-hits with '0'. Here is a data frame of all songs Spotify considers a hit:
-```{r}
+```{r Only Hits Table}
 hits_only <- filter(song_df,target == 1) 
 
 as_tibble(hits_only)
@@ -72,7 +72,7 @@ as_tibble(hits_only)
 
 Now that we have our working dataframe, we can try and identify changes in specific compositional aspects of hits and non-hits across decades. 
 
-```{r tempo}
+```{r Graphing Tempo vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
 plotting <- df %>% 
@@ -92,7 +92,7 @@ song_df %>%
 
 Tempo is the overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration. The graph above conveys that there is not much change in average tempo as the decades change. Furthermore, the tempo between hits(blue) and non-hits(red) aren't too different as well for each decade. This indicates that listeners' taste for tempo seldom changes. Is this because humans are inherently drawn to listen to songs within a given tempo range?
 
-```{r energy}
+```{r Graphing Energy vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
 plotting <- df %>% 
@@ -112,7 +112,7 @@ song_df %>%
 
 Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy. Average energy seems to have a more obvious trend then that of energy. Within each decade, songs that were hits had higher average energy ratings. Average energy also seems to grow for both hits and non-hits as we move from decade to decade. There is a slight drop from the 2000s to 2010s, but nothing that would overwhelmingly indicate a future trend towards lower energy songs. 
 
-```{r acousticness}
+```{r Graphing Acousticness vs. Decade}
 plot_avg_by_decade <- function(df,col) {
   
   plotting <- df %>% 
@@ -132,7 +132,7 @@ song_df %>%
 
 Acoustiness is a confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic. Within each decade, hits tended to have lower acoustic ratings than non-hits. This trend persists as time progresses as average acousticness for both hits and non hits sees a drop in each decade. It seem like listeners' are not too interested in songs with high acoustiness ratings. 
 
-```{r liveliness}
+```{r Liveliness vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -152,7 +152,7 @@ song_df %>%
 
 Liveness Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live. Liveness originally seems to indicate that there isn't much change, but if you look closely, hits subtly decrease in liveness as time progresses. Contemporary listeners may be more interested in studio-recorded music than they are in live music.  
 
-```{r durationms}
+```{r Durations vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -172,7 +172,7 @@ song_df %>%
 
 Duration is measured in milliseconds. Listeners seemed to prefer longer songs going into the 1990s, but subsequently began to grow a renewed liking to more concise pieces.
 
-```{r timesignature}
+```{r Time Signature vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -192,7 +192,7 @@ song_df %>%
 
 Time signature is an estimated overall time signature of a track. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure). Time signatures seem to stay fairly consistent between both hits and non-hits as time progresses.
 
-```{r chorushit}
+```{r Chorus vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -202,7 +202,7 @@ plot_avg_by_decade <- function(df,col){
   
   ggplot(plotting) + 
     geom_bar(stat="identity", aes(x=decade,y = avg,fill=target), position="dodge") +
-    labs(title = "Chorous Hit Changes per Decade Between Hits(1) and Non-Hits(0)", x = "Decade", y = "Average Chorus Hit") +
+    labs(title = "Chorus Hit Changes per Decade Between Hits(1) and Non-Hits(0)", x = "Decade", y = "Average Chorus Hit") +
     theme(plot.title = element_text(hjust = 0.5)) 
 }
 
@@ -212,7 +212,7 @@ song_df %>%
 
 Chorus hit is the artist's best estimate of when the chorus would start for the track. Its the timestamp of the start of the third section of the track (in milliseconds). There is a general trend for all songs: all choruses for both hits and non-hits seems to hit for the first time around the 40 second mark of a song. It's quite intriguing that no decade has worked to break this trend. 
 
-```{r sections}
+```{r Sections vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -232,7 +232,7 @@ song_df %>%
 
 Sections refers to the number of sections the particular track has. Similar to duration statistics, it seems like listeners yearned for more sections in their music up until the 2000s, when hits started to become relatively more concise. 
 
-```{r loudness}
+```{r Loudness vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -252,7 +252,7 @@ song_df %>%
 
 The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db. As time has progessed, it seems like music as a whole (both hits and non-hits) tend to become more loud. This may be due to the use of more technology when producing songs. Electronic devices can emulate sounds that are loud better than concrete instruments themselves. An example would be the 808 drum in hip-hop music.
 
-```{r speechiness}
+```{r Speechiness vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
@@ -272,7 +272,7 @@ song_df %>%
 
 Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. From the 60s to the 80s, rock-and-roll was very popular, which is why hits tended to have less spechiness. With the rise of modern pop and hip-hip, hits are now far more speechy. There is little evidence to assert this this upward trend in speechiness will soon come to an end. 
 
-```{r instrumentalness}
+```{r Instrumentalness vs. Decade}
 plot_avg_by_decade <- function(df,col){
   
   plotting <- df %>% 
