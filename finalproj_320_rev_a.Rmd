@@ -292,41 +292,11 @@ song_df %>%
 
 Instrumentalness predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. There is an abvious trend that listeners lean towards songs that are more vocal than those that are instrumental. This preference has gotten even more obvious as time has progressed, with hits for the 2010s not even surpassing an average instrumentalness rating of 0.05.
 
-
-=========================I don't see why this is necessary. Doesn't help much with storytelling===============================
-```{r}
-song_df %>% 
-  group_by(decade) %>%
-  count -> freq
-  ggplot(freq) + geom_bar(stat= "identity",aes(x=decade,y = n),position = "dodge")
-```
-how many songs in each decade
-
-
-
-```{r}
-plot_total_hits_by_decade <- function(df,col){
-  
-  plotting <- df %>% group_by(decade) %>% 
-    summarise(hits=sum({{col}}))
-  ggplot(plotting) + geom_bar(stat= "identity",aes(x=decade,y = hits))
-}
-song_df %>% plot_total_hits_by_decade(target)
-
-
-
-
-
-```
-hits per decade
-This graph looks at the total amount of hits per decade. This is relevant because it shows that there was more variance in terms of how many different songs were hits. Leads to questions of how many different artists had hits to see if popularity of artists determined the amount of hits.
-==============================================see above=====================================================================
-
 ## Machine Learning
 
 With our newfound info about the compositional makeup of hits and non-hits between decades, we can now try and build a machine learning model that can predict wether or not a song is a hit. As mentioned previously, we will train our model using all songs up to and including the 2000s. We will then use our model to predict whether or not a 2010s song will be a hit. We will compare our model's result (hit or non-hit) with the actual target value from Spotify to measure the model's accuracy.
 
-## Random Forest
+### Random Forest
 
 The first model we will use will be a random forest. The code below filters specific entities and using tidymodel, we build our testing and training data. We also preporcoess our data to ensure that it can be processed correctly before building our model.
 
@@ -368,7 +338,7 @@ r_forest %>%
 ```
 Our machine learning model was able to predict hits at roughly a 79% success rate. Using this model, record labels, as long as they have the correct compositional metrics for a song, can predict if it will be a hit with roughly 80% confidence. Not bad at all.   
 
-## Multiple Logistic Regression
+### Multiple Logistic Regression
 
 ```{r}
 
@@ -383,7 +353,7 @@ summary(musiclog)
 ```
 
 
-## Correlation Analysis
+#### Correlation Analysis
 
 ```{r }
 
@@ -397,7 +367,7 @@ The correlation plot helps showcase the relationship between numeric variables. 
 
 
 
-## Logistic Regression Model
+#### Logistic Regression Model
 
 ```{r }
 musiclog$decade = as.factor(musiclog$decade)#converting decade variable to factor
@@ -435,7 +405,7 @@ From the model summary it is clear that at 95% confidence interval all the indep
 By keeping the cutoff for the Target variable to be considered as hit to .6 , a confusion matrix was created. The confusion matrix shows the model has an accuracy of 74.56% which is greater than the No - information rate. The confusion matrix also shows the sensitivity(82.46%) and specificity(66.6%) for the model.
 
 
-## Variable Importance as Per T-Statistic
+#### Variable Importance as Per T-Statistic
 
 ```{r }
 
@@ -465,109 +435,3 @@ ggplot(hit_amount) +
 ```
 
 The graph above shows that it used to be far more difficult to get a "breakout" hit. The growth of technology has given aspiring artists a plotform where they can broadcast and promote their own music and brad, which may be the reason why the numbers begin to even out as time progresses. Our model doesn't consider the technological aspect of society. Songs can go viral at any time. Take, for instance, Old Town Road by Lil Nas X. The song blew up on social media before it became the longest reigning #1 hit on Billboard top 100. Maybe instances like this are impossible to predict, but still something worth noting nonetheless. 
-
-```{r}
-song_df %>% 
-  group_by(decade,artist) %>%
-  summarise(num_hits=sum(target))%>%
-  mutate(hit_range=cut(num_hits,c(0,1,2,5,11,21,31,41,75),right=FALSE,include.lowest = TRUE))%>% 
-  group_by(decade,hit_range)%>% 
-  count -> tot_hit
-ggplot(tot_hit) + geom_bar(stat="identity", aes(x=decade,y=n,fill=hit_range),position = "dodge")
-  
-# %of hits from artists who already have one vs % of hits from those who don't(total artists with hits vs total hits starting from the second hit) --> try 
-
-#artist likelihood of having a previous hit affect liklihood of another song becoming a hit (when does the "takeoff happen) #how many hit songs (does it exponentially increase chances of having more) graph of total amount of hits vs how many artists have that many hits
-```
-#compares growth between ranges of hits. seeing how many hits an artist needs before they reach a certain amount of hits --> Stardom? break up this data more to get better precentages for determining the tipping point between "guaranteed hit"
-
-
-
-#shows how many artists had how many hits on ranges in each decade.
-
-```{r}
-song_df %>% 
-  group_by(decade,artist) %>%
-  summarise(num_hits=sum(target))%>%
-  mutate(hit_range=cut(num_hits,c(0,1,2,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75),right=FALSE,include.lowest = TRUE))%>% 
-  group_by(decade,hit_range)%>% 
-  summarise(n=n()) %>% 
-  ungroup() -> mid_df
-
-hit_ranges <- mid_df %>% ungroup() %>%
-  distinct(hit_range) %>%
-  mutate(join_var = 1)
-
-decades <- mid_df %>% 
-  distinct(decade) %>% 
-  arrange(decade) %>% mutate(join_var = 1)
-all_combo <- hit_ranges %>% 
-  inner_join(decades,by = "join_var") %>% 
-  select(-join_var)
-
-all_combo %>% 
-  left_join(mid_df,by = c("decade","hit_range")) %>% 
-  replace_na(list(n=0)) %>% 
-  group_by(decade) %>% 
-  arrange(hit_range) %>% 
-  mutate(freq = n/sum(n),cum_freq = rev(cumsum(rev(freq)))) %>% 
-  ungroup() -> per_df
-  
-  
-decades <- per_df %>% 
-  distinct(decade) %>% 
-  arrange(decade) %>% 
-  unlist() %>% 
-  unname()
-
-plot_lst = list()
-for (dec in decades) {
-  plot_lst [[dec]] <- ggplot(per_df %>% filter(decade == dec)) + geom_bar(aes(x = hit_range,y=cum_freq), stat = "identity") + ggtitle(dec)
-}
-plot_lst[["60"]]
-plot_lst[["70"]]
-plot_lst[["80"]]
-plot_lst[["90"]]
-plot_lst[["00"]]
-plot_lst[["10"]]
-```
-#total hits in each decade will divide each entity going up showing percentages 
-
-#if artist already has a hit go in 'b' else 'a'
-
-
-```{r}
-
-
-
-#machine learning model for predicting hits, or determining how a song would become a hit (XGB, logistic regression(linear) determines what variables are importantnt for making hits, or random forest--non linear)
-
-
-
-
-
-
-#different formula potentially for first hit vs afterwards like lets say the song hit #40 would that change if the song was #1 or #100
-
-
-
-#after training models look for equivalent dataset to see if there is something for 2020 so far
-
-#https://www.kaggle.com/theoverman/the-spotify-hit-predictor-dataset
-#https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/
-#https://towardsdatascience.com/song-popularity-predictor-1ef69735e380
-#might need to scrape billboard top 100 to get the list of songs we need to test -> what about the other elements
-
-#https://github.com/manasreldin/Song-Popularity-Predictor/blob/master/Scrape_BB.ipynb -> datascrape billbaord
-
-#https://github.com/manasreldin/Song-Popularity-Predictor/blob/master/demo.py
-
-#https://github.com/manasreldin/Song-Popularity-Predictor/blob/master/SimpleFeatures.csv
-
-#https://github.com/manasreldin/Song-Popularity-Predictor/blob/master/PredictHotBB.ipynb
-```
-As a result of there not being any significant data to suggest whether or not there is a a difference between tempo we test other aspects of the dataframe to see if there are any indictors to show separation between songs that are hits and songs that are not.
-
-
-
-
